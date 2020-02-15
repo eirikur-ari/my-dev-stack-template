@@ -1,0 +1,48 @@
+version: '3.7'
+
+services:
+  consul:
+    image: 'consul:1.7.0'
+    ports:
+      - '8400:8400'
+      - '8500:8500'
+      - '8600:8600'
+      - '8600:8600/udp'
+    restart: always
+
+  registrator:
+    image: 'gliderlabs/registrator:v7'
+    volumes:
+      - '/var/run/docker.sock:/tmp/docker.sock'
+    command: consul://consul:8500
+    restart: always
+    depends_on:
+      - consul
+
+  mysql:
+    image: 'mysql:5.7.29'
+    volumes: 
+      - ./data/mysql:/var/lib/mysql
+      - ./scripts/mysql-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+    ports:
+      - '3306:3306'
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
+    restart: always
+    depends_on:
+      - registrator
+
+  rabbitmq:
+    image: 'rabbitmq:3.7.24-management'
+    hostname: 'rabbitmq-ruleengine'
+    volumes:
+      - ./data/rabbitmq:/var/lib/rabbitmq
+      - ./scripts/rabbitmq-init.sh:/init.sh:ro
+    ports:
+      - '15672:15672'
+      - '5672:5672'
+    command: sh init.sh
+    restart: always
+    depends_on:
+      - registrator
