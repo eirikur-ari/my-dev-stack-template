@@ -16,6 +16,7 @@ rabbitmqctl add_vhost test; \
 # Create the test user for the test vhost
 rabbitmqctl add_user test_user password ; \
 rabbitmqctl set_permissions -p test test_user ".*" ".*" ".*" ; \
+rabbitmqctl set_permissions -p test admin ".*" ".*" ".*" ; \
 
 ) &
 rabbitmq-server $@
